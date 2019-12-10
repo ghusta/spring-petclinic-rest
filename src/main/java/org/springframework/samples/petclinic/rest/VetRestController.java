@@ -28,6 +28,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.samples.petclinic.model.Specialty;
 import org.springframework.samples.petclinic.model.Vet;
+import org.springframework.samples.petclinic.security.HasRoleVetAdmin;
 import org.springframework.samples.petclinic.service.ClinicService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
@@ -49,14 +50,14 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 @RestController
 @CrossOrigin(exposedHeaders = "errors, content-type")
-@RequestMapping("api/vets")
+@RequestMapping("/api/vets")
 public class VetRestController {
 
 	@Autowired
 	private ClinicService clinicService;
 
-    @PreAuthorize( "hasRole(@roles.VET_ADMIN)" )
-	@GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
+    @HasRoleVetAdmin
+	@GetMapping(path = "", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Collection<Vet>> getAllVets(){
         Collection<Vet> vets = new ArrayList<>(this.clinicService.findAllVets());
 		if (vets.isEmpty()){
@@ -65,8 +66,8 @@ public class VetRestController {
 		return new ResponseEntity<>(vets, HttpStatus.OK);
 	}
 
-    @PreAuthorize( "hasRole(@roles.VET_ADMIN)" )
-	@GetMapping(value = "/{vetId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @HasRoleVetAdmin
+	@GetMapping(path = "/{vetId}", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Vet> getVet(@PathVariable("vetId") int vetId){
 		Vet vet = this.clinicService.findVetById(vetId);
 		if(vet == null){
@@ -75,8 +76,8 @@ public class VetRestController {
 		return new ResponseEntity<>(vet, HttpStatus.OK);
 	}
 
-    @PreAuthorize( "hasRole(@roles.VET_ADMIN)" )
-	@PostMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
+    @HasRoleVetAdmin
+	@PostMapping(path = "", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Vet> addVet(@RequestBody @Valid Vet vet, BindingResult bindingResult, UriComponentsBuilder ucBuilder){
 		BindingErrorsResponse errors = new BindingErrorsResponse();
 		HttpHeaders headers = new HttpHeaders();
@@ -90,8 +91,8 @@ public class VetRestController {
 		return new ResponseEntity<>(vet, headers, HttpStatus.CREATED);
 	}
 
-    @PreAuthorize( "hasRole(@roles.VET_ADMIN)" )
-	@PutMapping(value = "/{vetId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @HasRoleVetAdmin
+	@PutMapping(path = "/{vetId}", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Vet> updateVet(@PathVariable("vetId") int vetId, @RequestBody @Valid Vet vet, BindingResult bindingResult){
 		BindingErrorsResponse errors = new BindingErrorsResponse();
 		HttpHeaders headers = new HttpHeaders();
@@ -114,8 +115,8 @@ public class VetRestController {
 		return new ResponseEntity<>(currentVet, HttpStatus.NO_CONTENT);
 	}
 
-    @PreAuthorize( "hasRole(@roles.VET_ADMIN)" )
-	@DeleteMapping(value = "/{vetId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @HasRoleVetAdmin
+	@DeleteMapping(path = "/{vetId}", produces = MediaType.APPLICATION_JSON_VALUE)
 	@Transactional
 	public ResponseEntity<Void> deleteVet(@PathVariable("vetId") int vetId){
 		Vet vet = this.clinicService.findVetById(vetId);
