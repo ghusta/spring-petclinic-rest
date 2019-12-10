@@ -17,6 +17,9 @@
 package org.springframework.samples.petclinic.rest;
 
 import static org.mockito.BDDMockito.given;
+import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.authenticated;
+import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.unauthenticated;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -32,13 +35,17 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.samples.petclinic.model.Vet;
 import org.springframework.samples.petclinic.service.clinicService.ApplicationTestConfig;
 import org.springframework.samples.petclinic.service.ClinicService;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -47,6 +54,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.web.context.WebApplicationContext;
 
 /**
  * Test class for {@link VetRestController}
@@ -74,7 +82,7 @@ public class VetRestControllerTests {
     	this.mockMvc = MockMvcBuilders.standaloneSetup(vetRestController)
     			.setControllerAdvice(new ExceptionControllerAdvice())
     			.build();
-    	vets = new ArrayList<Vet>();
+    	vets = new ArrayList<>();
 
 
     	Vet vet = new Vet();
@@ -106,6 +114,25 @@ public class VetRestControllerTests {
             .andExpect(content().contentTypeCompatibleWith("application/json"))
             .andExpect(jsonPath("$.id").value(1))
             .andExpect(jsonPath("$.firstName").value("James"));
+    }
+
+    @Test
+    public void testGetVetUnauthorized() throws Exception {
+        given(this.clinicService.findVetById(1)).willReturn(vets.get(0));
+        this.mockMvc.perform(get("/api/vets/1")
+            .accept(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(unauthenticated())
+            .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(roles = {})
+    public void testGetVetForbidden() throws Exception {
+        given(this.clinicService.findVetById(1)).willReturn(vets.get(0));
+        this.mockMvc.perform(get("/api/vets/1")
+            .accept(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(authenticated())
+            .andExpect(status().isForbidden());
     }
 
     @Test
